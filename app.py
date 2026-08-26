@@ -54,11 +54,23 @@ if uploaded_file is not None:
             '氏(配送先)', '名(配送先)', 'アイテム名', '種類', '個数',
             '郵便番号(配送先)', '都道府県(配送先)', '住所(配送先)', '備考'
         ]
-        missing = [col for col in required_columns if col not in df.columns]
-        
+
+        # '種類'と'備考'は、STORES側でバリエーション（種類）や備考を
+        # 使用していない商品のみで構成されたCSVの場合、列自体が
+        # 出力されないことがある。これらは無くても変換を続行できるため、
+        # 必須チェックからは除外し、存在しない場合は空文字列の列として補完する。
+        optional_columns = ['種類', '備考']
+        mandatory_columns = [col for col in required_columns if col not in optional_columns]
+
+        missing = [col for col in mandatory_columns if col not in df.columns]
+
         if missing:
             st.error(f"CSVファイルの形式が正しくありません。次の必須列が不足しています: {missing}")
         else:
+            for col in optional_columns:
+                if col not in df.columns:
+                    df[col] = ""
+
             st.success("CSVファイルを正常に読み込みました。Excelファイルへの変換を行います。")
             st.dataframe(df.head(3))
 
